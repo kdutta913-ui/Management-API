@@ -1,0 +1,29 @@
+{
+  "name": "management-backend-api",
+  "version": "1.0.0",
+  "description": "hii",
+  "main": "server.js",
+  "scripts": {
+    "start": "nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kdutta913-ui/Management-API.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/kdutta913-ui/Management-API/issues"
+  },
+  "homepage": "https://github.com/kdutta913-ui/Management-API#readme",
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "mongoose": "^9.9.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
