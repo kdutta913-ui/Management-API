@@ -1,13 +1,8 @@
 const express = require("express");
+const employeeRoute = require("./employee.routes")
+
 const router = express.Router();
 
-router.get("/", (req, res)=>{
-    res.send("Employee management API is running")
-})
-
-router.post("/test", (req, res)=>{
-   console.log(req.body)
-   res.send(req.body)
-})
+router.use("/api/employees", employeeRoute)
 
 module.exports = router;
