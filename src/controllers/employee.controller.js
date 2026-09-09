@@ -1,6 +1,6 @@
 const Employee = require('../models/employee.models')
 
-const createEmployee = async (req,res) => {
+const createEmployee = async (req,res,next) => {
     try {
         const {name, phoneNum, email} = req.body
         if(!name || !phoneNum || !email){
@@ -14,34 +14,21 @@ const createEmployee = async (req,res) => {
         })
         res.status(201).json({message: "Employee created successfully", employee})
     } catch (error) {
-        console.log(error)
-        if (error.code === 11000) {
-            if (error.keyPattern.email) {
-                return res.status(409).json({message:"Email already exists."})
-            } 
-            else if(error.keyPattern.phoneNum) {
-                return res.status(409).json({message:"Phone number already exists."})
-            }
-        } 
-        else {
-            res.status(500).json({message: "Server error", error:error.message})
-        }
-
+        next(error)
     }
 };
 
-const getEmployees = async (req,res) =>{
+const getEmployees = async (req,res, next) =>{
     try {
         const employees =  await Employee.find()
         res.status(200).json({employees})
         }
     catch (error) {
-        console.log(error)
-        res.status(500).json({message:"Server error", error:error.message})
+        next(error)
     }
 }
 
-const getEmployeeById = async (req,res)=>{
+const getEmployeeById = async (req,res, next)=>{
     try {
         const employee = await Employee.findById(req.params.id)
         if(!employee){
@@ -49,41 +36,37 @@ const getEmployeeById = async (req,res)=>{
         }
         res.status(200).json({employee})
     } catch (error) {
-        console.log(error)
-        if(error.name === "CastError"){
-            return res.status(400).json({message:"Invalid Employee ID."})
-        }
-        res.status(500).json({message:"Server error", error:error.message})
+        next(error)
     }
 }
 
-const updateEmployee = async(req,res)=>{
+const updateEmployee = async(req,res,next)=>{
     try {
+        const allowedFields = ["name", "email", "phoneNum", "department", "designation", "salary", "address"]
+        const updates = {}
+        allowedFields.forEach((field) =>{
+            if(req.body[field] !== undefined){
+                updates[field] = req.body[field]
+            }
+        })
         const employee = await Employee.findByIdAndUpdate(
             req.params.id,
-            req.body,
-            {new: true}
+            updates,
+            {
+                returnDocument: "after",
+                runValidators: true
+            }
         )
         if(!employee){
             return res.status(404).json({message:"Employee doesn't exists."})
         }
         res.status(200).json({message:"Employee updated successfully", employee})
     } catch (error) {
-        console.log(error)
-        if (error.code === 11000) {
-            if (error.keyPattern.email) {
-                return res.status(409).json({message:"Email already exists"})
-            } else if(error.keyPattern.phoneNum){
-                return res.status(409).json({message:"Phone number already exists"})
-            }
-        } 
-        else {
-            res.status(500).json({message:"Server error", error: error.message})
-        }
+        next(error)
     }
 }
 
-const deleteEmployee = async(req,res)=>{
+const deleteEmployee = async(req,res,next)=>{
     try {
         const employee = await Employee.findByIdAndDelete(
         req.params.id
@@ -93,11 +76,7 @@ const deleteEmployee = async(req,res)=>{
         }
         res.status(200).json({message:"Deleted successfully", employee})
     } catch (error) {
-        console.log(error)
-        if(error.name === "CastError"){
-            return res.status(400).json({message:"Invalid Employee ID."})
-        }
-        res.status(500).json({message:"Server error", error: error.message})
+        next(error)
     }
 }
 
