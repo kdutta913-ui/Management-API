@@ -47,50 +47,82 @@ const updateEmployee = async(req,res,next)=>{
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
         const phoneNumRegex = /^[6-9]\d{9}$/
         //Email validation
+        let newEmail;
         if(req.body.email !== undefined){
-            if(req.body.email === null || typeof req.body.email !== "string" || req.body.email === ""){
+            if(req.body.email === null || typeof req.body.email !== "string"){
                 return res.status(400).json({message: "Email should be valid"})
             }
-
-            if(!emailRegex.test(req.body.email)){
+            const value = req.body.email.trim()
+            if(value === ""){
+                return res.status(400).json({message:"Invalid email"})
+            }
+            if(!emailRegex.test(value)){
                 return res.status(400).json({message:"Invalid email address"})
             }
+            newEmail = value
         }
         //Phone validation
+        let newPhoneNum;
         if(req.body.phoneNum !== undefined){
             if(req.body.phoneNum === null || typeof req.body.phoneNum === 'boolean'){
                 return res.status(400).json({message:"Invalid phone number"})
             }
             if(typeof req.body.phoneNum === "string" || typeof req.body.phoneNum === "number"){
-                const phoneNum = String(req.body.phoneNum)
+                const phoneNum = String(req.body.phoneNum).trim()
+                if(phoneNum === ""){
+                    return res.status(400).json({message:"Invalid phone number"})
+                }
                 if(!phoneNumRegex.test(phoneNum)){
                     return res.status(400).json({message:"Invalid phone number"})
                 }
-            else{
-                return res.status(400).json({message:"Enter valid phone number"})
+                newPhoneNum = phoneNum
             }
+            else{
+                return res.status(400).json({message:"Invalid phone number"})
             }
         }
         //Salary validation
         let sal;
         if(req.body.salary !== undefined){
-            if(req.body.salary === null || typeof req.body.salary === 'boolean' || req.body.salary === ""){
+            if(req.body.salary === null || typeof req.body.salary === 'boolean'){
                 return res.status(400).json({message:'Invalid salary'})
             }
-            if(typeof req.body.salary === 'string' || typeof req.body.salary === 'number'){
+            if(typeof req.body.salary === 'string'){
+                const value = req.body.salary.trim()
+                if(value === ""){
+                    return res.status(400).json({message:"Salary souldn't be empty."})
+                }
+            sal = Number(value);
+            }
+            else if(typeof req.body.salary === 'number'){    
                 sal = Number(req.body.salary)
-                if(Number.isNaN(sal)){
-                    return res.status(400).json({message:"Enter valid salary"})
-                }
-                if(sal < 0){
-                    return res.status(400).json({message:"Salary can't be negative."})
-                }
+            }
             else{
                 return res.status(400).json({message:"Invalid salary"})
             }
+            
+            if(Number.isFinite(sal)){
+                return res.status(400).json({message:"Enter valid salary"})
+            }
+
+            if(sal < 0){
+                return res.status(400).json({message:"Salary can't be negative"})
             }
         }
         
+        //Name Validation
+        let newName;
+        if (req.body.name !== undefined) {
+            if(req.body.name === null || typeof req.body.name !== 'string'){
+                return res.status(400).json({message:"Invalid name"})
+            }
+            const value = req.body.name.trim()
+            if(value === ""){
+                return res.status(400).json({message:"Name can't be empty"})
+            }
+            newName = value
+        }
+
         const updates = {}
         const invalidAddressFields = Object.keys(req.body.address || {}).find(field => !allowedAddressFields.includes(field))
 
@@ -118,6 +150,23 @@ const updateEmployee = async(req,res,next)=>{
                 }
             }
 
+            else if(field === "name"){
+                if(newName !== undefined){
+                    updates[field] = newName
+                }
+            }
+
+            else if(field === "email"){
+                if(newEmail !== undefined){
+                    updates[field] = newEmail
+                }
+            }
+
+            else if(field === 'phoneNum'){
+                if(newPhoneNum !== undefined){
+                    updates[field] = newPhoneNum
+                }
+            }
             else{
                 if(req.body[field] !== undefined){
                     updates[field] = req.body[field]
@@ -165,4 +214,4 @@ module.exports = {
     getEmployeeById,
     updateEmployee,
     deleteEmployee
-};
+}
