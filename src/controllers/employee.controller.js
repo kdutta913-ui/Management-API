@@ -3,10 +3,6 @@ const Employee = require('../models/employee.models')
 const createEmployee = async (req,res,next) => {
     try {
         const {name, phoneNum, email} = req.body
-        if(!name || !phoneNum || !email){
-            return res.status(400).json({message:"Name, email and phone number are required."})
-        }
-
         const employee = await Employee.create({
             name,
             email,
