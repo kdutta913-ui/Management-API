@@ -1,13 +1,9 @@
+const { allowedAddressFields } = require('../constants/employeeFields');
 const Employee = require('../models/employee.models')
 
 const createEmployee = async (req,res,next) => {
     try {
-        const {name, phoneNum, email} = req.body
-        const employee = await Employee.create({
-            name,
-            email,
-            phoneNum,
-        })
+        const employee = await Employee.create(req.body)
         res.status(201).json({message: "Employee created successfully", employee})
     } catch (error) {
         next(error)
@@ -38,8 +34,6 @@ const getEmployeeById = async (req,res, next)=>{
 
 const updateEmployee = async(req,res,next)=>{
     try {
-        console.log(req.body)
-        const allowedAddressFields = ["street", "city", "state", "pincode"]
         const updates = {}
 
         Object.keys(req.body).forEach((field) =>{

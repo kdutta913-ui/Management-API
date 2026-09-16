@@ -1,7 +1,6 @@
+const { allowedAddressFields, allowedFields } = require("../constants/employeeFields")
+
 const validateEmployeeFields = (req,res,next) =>{
-    const allowedFields = ["name", "email", "phoneNum", "department", "designation", "salary", "address"]
-    const allowedAddressFields = ["street", 'city', 'state', 'pincode']
-    
     const invalidAddressFields = Object
     .keys(req.body.address || {})
     .find(field => !allowedAddressFields
@@ -18,6 +17,11 @@ const validateEmployeeFields = (req,res,next) =>{
 }
 
 const validateEmployeeCreate = (req, res, next) => {
+    if(req.body === null || typeof req.body !== "object" || Array.isArray(req.body)){
+        return res.status(400).json({
+            message: "Request body must be an object"
+        })
+    }
     const requiredFields = ["name", "email", "phoneNum"]
 
     const missingField = requiredFields.find(
