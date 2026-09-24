@@ -1,11 +1,51 @@
 const { allowedAddressFields } = require('../constants/employeeFields');
 const Employee = require('../models/employee.models')
+const User = require("../models/user.models")
+const bcrypt = require("bcrypt")
 
 const createEmployee = async (req,res,next) => {
     try {
-        const employee = await Employee.create(req.body)
-        res.status(201).json({message: "Employee created successfully", employee})
+        const { name, email, phoneNum, password, department, designation, salary } = req.body;
+
+        //check email
+        const existingEmail = await User.findOne({email});
+        console.log("EMAIL BEING CHECKED:", email);
+        console.log("EXISTING USER:", existingEmail);
+        if(existingEmail){
+            return res.status(409).json({message: "User with this email already exists"})
+        }
+
+        //check phone number
+        const existingPhone = await User.findOne({phoneNum});
+        if(existingPhone){
+            return res.status(409).json({message:"User with this phone number already exists"})
+        }
+
+        //hash password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        console.log("ABOUT TO CREATE USER");
+        // create user
+        const user = await User.create({
+            name,
+            email,
+            phoneNum,
+            password: hashedPassword,
+            role: "Employee",
+            isActive: true
+        })
+
+        console.log("USER CREATED:", user._id);
+
+        const employee = await Employee.create({
+            userId: user._id,
+            department,
+            designation,
+            salary
+        })
+        return res.status(201).json({message: "Employee created successfully", userId: user._id, employeeId: employee._id})
     } catch (error) {
+        console.log("CREATE EMPLOYEE ERROR:", error);
         next(error)
     }
 };

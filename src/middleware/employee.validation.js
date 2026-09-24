@@ -22,7 +22,7 @@ const validateEmployeeCreate = (req, res, next) => {
             message: "Request body must be an object"
         })
     }
-    const requiredFields = ["name", "email", "phoneNum"]
+    const requiredFields = ["name", "email", "phoneNum", "password"]
 
     const missingField = requiredFields.find(
         field => req.body[field] === undefined ||
@@ -98,6 +98,22 @@ const validatePhone = (req,res,next) =>{
     next()
 }
 
+//Password Validation
+const passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/
+const validatePassword = (req, res, next) =>{
+    const {password} = req.body
+
+    if(typeof password !== 'string'){
+        return res.status(400).json({message:"Password should be a string"})
+    }
+
+    if (!passwordRegex.test(password)) {
+        return res.status(400).json({ message: "Password should be at least 8 characters and should contain uppercase, lowercase letters and a number" })
+    }
+
+    next();
+}
+
 //Salary validation
 const validateSalary = (req,res,next) =>{
     if(req.body.salary !== undefined){
@@ -137,5 +153,6 @@ module.exports = {
     validateName,
     validateEmail,
     validatePhone,
+    validatePassword,
     validateSalary
 }
