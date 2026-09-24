@@ -1,19 +1,11 @@
 const mongoose = require('mongoose')
 
 const employeeSchema = new mongoose.Schema({
-    name:{
-        type: String,
+    userId:{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
         required: true,
-    },
-    email:{
-        type:String,
-        required:true,
-        unique:true,
-    },
-    phoneNum:{
-        type: String,
-        required: true,
-        unique: true,
+        unique:true
     },
     department:{
         type:String

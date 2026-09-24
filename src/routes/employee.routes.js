@@ -1,6 +1,6 @@
 const express = require('express');
 const { createEmployee, getEmployees, getEmployeeById, updateEmployee, deleteEmployee } = require('../controllers/employee.controller');
-const { validateEmployeeFields, validateName, validateEmail, validatePhone, validateSalary, validateEmployeeCreate } = require('../middleware/employee.validation');
+const { validateEmployeeFields, validateName, validateEmail, validatePhone, validateSalary, validateEmployeeCreate, validatePassword } = require('../middleware/employee.validation');
 
 const authenticate = require('../middleware/authenticate.middleware')
 const authorize = require("../middleware/authorize.middleware")
@@ -15,6 +15,7 @@ router.post("/",
     validateName,
     validateEmail,
     validatePhone,
+    validatePassword,
     validateSalary, 
     createEmployee) //create employee
 

@@ -2,10 +2,10 @@ const allowedFields = [
     "name",
     "email",
     "phoneNum",
+    "password",
     "department",
     "designation",
-    "salary",
-    "address"
+    "salary"
 ]
 
 const allowedAddressFields = [
