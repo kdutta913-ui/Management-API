@@ -60,13 +60,21 @@ const createEmployee = async (req,res,next) => {
 
 const getEmployees = async (req,res, next) =>{
     try {
-        const employees =  await Employee.find()
-        res.status(200).json({employees})
+        const employees =  await Employee
+        .find()
+        .populate(
+            "userId", 
+            "name email phoneNum role isActive"
+        )
+        return res.status(200).json({
+            message: "Employee fetched successfully",
+            count: employees.length,
+            employees})
         }
     catch (error) {
         next(error)
     }
-}
+};
 
 const getEmployeeById = async (req,res, next)=>{
     try {
