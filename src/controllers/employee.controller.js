@@ -2,15 +2,16 @@ const { allowedAddressFields } = require('../constants/employeeFields');
 const Employee = require('../models/employee.models')
 const User = require("../models/user.models")
 const bcrypt = require("bcrypt")
+const mongoose = require("mongoose")
 
 const createEmployee = async (req,res,next) => {
+    const session = await mongoose.startSession();
     try {
+        session.startTransaction();
         const { name, email, phoneNum, password, department, designation, salary } = req.body;
 
         //check email
         const existingEmail = await User.findOne({email});
-        console.log("EMAIL BEING CHECKED:", email);
-        console.log("EXISTING USER:", existingEmail);
         if(existingEmail){
             return res.status(409).json({message: "User with this email already exists"})
         }
@@ -24,29 +25,36 @@ const createEmployee = async (req,res,next) => {
         //hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        console.log("ABOUT TO CREATE USER");
         // create user
-        const user = await User.create({
+        const [user] = await User.create([{
             name,
             email,
             phoneNum,
             password: hashedPassword,
             role: "Employee",
             isActive: true
-        })
-
-        console.log("USER CREATED:", user._id);
-
-        const employee = await Employee.create({
+        }],
+        {session}
+    )
+    console.log("USER CREATED:", user._id);
+        const [employee] = await Employee.create([{
             userId: user._id,
             department,
             designation,
             salary
-        })
-        return res.status(201).json({message: "Employee created successfully", userId: user._id, employeeId: employee._id})
+        }],
+        {session}
+    );
+
+    //commit transaction
+    await session.commitTransaction();
+    return res.status(201).json({message: "Employee created successfully", userId: user._id, employeeId: employee._id})
     } catch (error) {
+        await session.abortTransaction();
         console.log("CREATE EMPLOYEE ERROR:", error);
         next(error)
+    } finally{
+        await session.endSession();
     }
 };
 
