@@ -24,7 +24,7 @@ router.get("/",
     authorize("CompanyAdmin", "HR", "TeamLead"),
     getEmployees) //get all the employees
 
-    // Get my profile
+// Get my profile
 router.get("/me",
     authenticate,
     getMyProfile
@@ -32,12 +32,12 @@ router.get("/me",
 
 router.get("/:id",
     authenticate, 
-    authorize("CompanyAdmin", "HR", "TeamLead"), 
+    authorize("HR", "TeamLead"), 
     getEmployeeById) // get the employee by id
 
 router.patch("/:id",
     authenticate, 
-    authorize("CompanyAdmin", "HR"),
+    authorize("HR", "Employee"),
     validateEmployeeFields, 
     validateName, 
     validateEmail, 
@@ -47,13 +47,7 @@ router.patch("/:id",
 
 router.delete("/:id",
     authenticate, 
-    authorize("CompanyAdmin", "HR"), 
+    authorize("HR"), 
     deleteEmployee) // delete the employee 
 
-
-// Get my profile
-router.get("/me",
-    authenticate,
-    getMyProfile
-);
 module.exports = router;
