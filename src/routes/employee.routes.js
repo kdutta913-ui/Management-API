@@ -1,5 +1,5 @@
 const express = require('express');
-const { createEmployee, getEmployees, getEmployeeById, updateEmployee, deleteEmployee } = require('../controllers/employee.controller');
+const { createEmployee, getEmployees, getEmployeeById, updateEmployee, deleteEmployee, getMyProfile } = require('../controllers/employee.controller');
 const { validateEmployeeFields, validateName, validateEmail, validatePhone, validateSalary, validateEmployeeCreate, validatePassword } = require('../middleware/employee.validation');
 
 const authenticate = require('../middleware/authenticate.middleware')
@@ -24,6 +24,12 @@ router.get("/",
     authorize("CompanyAdmin", "HR", "TeamLead"),
     getEmployees) //get all the employees
 
+    // Get my profile
+router.get("/me",
+    authenticate,
+    getMyProfile
+);
+
 router.get("/:id",
     authenticate, 
     authorize("CompanyAdmin", "HR", "TeamLead"), 
@@ -44,4 +50,10 @@ router.delete("/:id",
     authorize("CompanyAdmin", "HR"), 
     deleteEmployee) // delete the employee 
 
+
+// Get my profile
+router.get("/me",
+    authenticate,
+    getMyProfile
+);
 module.exports = router;
