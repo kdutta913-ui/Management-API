@@ -15,7 +15,14 @@ const allowedAddressFields = [
     "pincode"
 ]
 
+const allowedEmployeeRoles = [
+    "HR",
+    "TeamLead",
+    "Employee"
+]
+
 module.exports = {
     allowedFields,
-    allowedAddressFields
+    allowedAddressFields,
+    allowedEmployeeRoles
 }
