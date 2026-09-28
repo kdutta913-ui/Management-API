@@ -80,10 +80,11 @@ const getEmployees = async (req,res, next) =>{
 const getEmployeeById = async (req,res, next)=>{
     try {
         const employee = await Employee.findById(req.params.id)
+        .populate("userId", "name email phoneNum role isActive")
         if(!employee){
             return res.status(404).json({message:"Employee doesn't exists"})
         }
-        res.status(200).json({employee})
+        res.status(200).json({message:"Employee fetched successfully", employee})
     } catch (error) {
         next(error)
     }
@@ -112,8 +113,16 @@ const getMyProfile = async(req,res,next) =>{
 
 const updateEmployee = async(req,res,next)=>{
     try {
-        const updates = {}
+        const employee = await Employee.findById(req.param.id);
+        if(!employee){
+            return res.status(404).json({message:"Employee doesn't exists."})
+        }
 
+        if(req.user.role === "Employee" && employee.userId.toString() !== req.user.userId){
+            return res.status(403).json({message: "You can only update your own profile."})
+        }
+
+        const updates = {}
         Object.keys(req.body).forEach((field) =>{
             if(field === "address"){
                 allowedAddressFields.forEach((addressField)=>{
@@ -129,7 +138,7 @@ const updateEmployee = async(req,res,next)=>{
             return res.status(400).json({message:"No valid fields provided for update."})
         }
         
-        const employee = await Employee.findByIdAndUpdate(
+        const updatedemployee = await Employee.findByIdAndUpdate(
             req.params.id,
             updates,
             {
@@ -140,23 +149,37 @@ const updateEmployee = async(req,res,next)=>{
         if(!employee){
             return res.status(404).json({message:"Employee doesn't exists."})
         }
-        res.status(200).json({message:"Employee updated successfully", employee})
+        res.status(200).json({message:"Employee updated successfully", updatedemployee})
     } catch (error) {
         next(error)
     }
 }
 
 const deleteEmployee = async(req,res,next)=>{
+    const session = await mongoose.startSession()
     try {
-        const employee = await Employee.findByIdAndDelete(
-        req.params.id
-        )
+        session.startTransaction()
+        const employee = await Employee.findById
+        (req.params.id)
+        .session(session);
+
         if(!employee){
+            await session.abortTransaction();
             return res.status(404).json({message: "Employee doesn't exists."})
         }
+
+        await Employee.findByIdAndDelete(req.params.id,
+        {session});
+        await User.findByIdAndDelete(employee.userId,
+            {session}
+        );
+        await session.commitTransaction()
         res.status(200).json({message:"Deleted successfully", employee})
     } catch (error) {
+        await session.abortTransaction()
         next(error)
+    } finally{
+        await session.endSession();
     }
 }
 
