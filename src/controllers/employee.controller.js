@@ -34,9 +34,8 @@ const createEmployee = async (req,res,next) => {
             role: "Employee",
             isActive: true
         }],
-        {session}
-    )
-    console.log("USER CREATED:", user._id);
+        {session})
+
         const [employee] = await Employee.create([{
             userId: user._id,
             department,
@@ -58,6 +57,7 @@ const createEmployee = async (req,res,next) => {
     }
 };
 
+//  Get All the employees
 const getEmployees = async (req,res, next) =>{
     try {
         const employees =  await Employee
@@ -76,6 +76,7 @@ const getEmployees = async (req,res, next) =>{
     }
 };
 
+// Get particular employee by ID
 const getEmployeeById = async (req,res, next)=>{
     try {
         const employee = await Employee.findById(req.params.id)
@@ -85,6 +86,27 @@ const getEmployeeById = async (req,res, next)=>{
         res.status(200).json({employee})
     } catch (error) {
         next(error)
+    }
+}
+
+// Get own profile
+const getMyProfile = async(req,res,next) =>{
+    try {
+        const employee = await Employee.findOne({
+            userId: req.user.userId
+        }).populate(
+            "userId",
+            "name email phoneNum role isActive"
+        );
+
+        if(!employee){
+            return res.status(404).json({
+                message: "Employee profile not found"
+            })
+        }
+        return res.status(200).json({message:"Profile fetched successfully", employee})
+    } catch (error) {
+        next(error);
     }
 }
 
@@ -142,6 +164,7 @@ module.exports = {
     createEmployee,
     getEmployees,
     getEmployeeById,
+    getMyProfile,
     updateEmployee,
     deleteEmployee
 }
