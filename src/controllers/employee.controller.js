@@ -1,4 +1,4 @@
-const { allowedAddressFields } = require('../constants/employeeFields');
+const { allowedAddressFields, allowedEmployeeRoles } = require('../constants/employeeFields');
 const Employee = require('../models/employee.models')
 const User = require("../models/user.models")
 const bcrypt = require("bcrypt")
@@ -8,16 +8,22 @@ const createEmployee = async (req,res,next) => {
     const session = await mongoose.startSession();
     try {
         session.startTransaction();
-        const { name, email, phoneNum, password, department, designation, salary } = req.body;
+        const { name, email, phoneNum, role, password, department, designation, salary } = req.body;
 
+        if(!allowedEmployeeRoles.includes(role)){
+            await session.abortTransaction();
+            return res.status(400).json({
+                message:"Invalid employee role."
+            })
+        }
         //check email
-        const existingEmail = await User.findOne({email});
+        const existingEmail = await User.findOne({email}).session(session);
         if(existingEmail){
             return res.status(409).json({message: "User with this email already exists"})
         }
 
         //check phone number
-        const existingPhone = await User.findOne({phoneNum});
+        const existingPhone = await User.findOne({phoneNum}).session(session);
         if(existingPhone){
             return res.status(409).json({message:"User with this phone number already exists"})
         }
@@ -31,7 +37,7 @@ const createEmployee = async (req,res,next) => {
             email,
             phoneNum,
             password: hashedPassword,
-            role: "Employee",
+            role,
             isActive: true
         }],
         {session})
