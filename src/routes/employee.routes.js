@@ -47,7 +47,7 @@ router.patch("/:id",
 
 router.delete("/:id",
     authenticate, 
-    authorize("HR"), 
+    authorize("HR", "CompanyAdmin"), 
     deleteEmployee) // delete the employee 
 
 module.exports = router;

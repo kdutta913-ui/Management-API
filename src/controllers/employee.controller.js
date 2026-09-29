@@ -1,4 +1,4 @@
-const { allowedAddressFields, allowedEmployeeRoles } = require('../constants/employeeFields');
+const { allowedAddressFields, allowedEmployeeRoles, allowedHRUpdateFields, allowedEmployeeUpdateFields } = require('../constants/employeeFields');
 const Employee = require('../models/employee.models')
 const User = require("../models/user.models")
 const bcrypt = require("bcrypt")
@@ -33,6 +33,7 @@ const createEmployee = async (req,res,next) => {
 
         // create user
         const [user] = await User.create([{
+            companyId: req.user.companyId,
             name,
             email,
             phoneNum,
@@ -66,8 +67,13 @@ const createEmployee = async (req,res,next) => {
 //  Get All the employees
 const getEmployees = async (req,res, next) =>{
     try {
+        const users = await User.find({
+            companyId: req.user.companyId
+        }).select("_id");
+
+        const userIds = users.map(user => user._id);
         const employees =  await Employee
-        .find()
+        .find({userId: {$in: userIds}})
         .populate(
             "userId", 
             "name email phoneNum role isActive"
@@ -86,9 +92,13 @@ const getEmployees = async (req,res, next) =>{
 const getEmployeeById = async (req,res, next)=>{
     try {
         const employee = await Employee.findById(req.params.id)
-        .populate("userId", "name email phoneNum role isActive")
+        .populate("userId", "name email phoneNum role isActive companyId")
         if(!employee){
             return res.status(404).json({message:"Employee doesn't exists"})
+        }
+
+        if(employee.userId.companyId.toString() !== req.user.companyId.toString()){
+            return res.status(403).json({message:"You are not authorized to access this employee"})
         }
         res.status(200).json({message:"Employee fetched successfully", employee})
     } catch (error) {
@@ -119,27 +129,43 @@ const getMyProfile = async(req,res,next) =>{
 
 const updateEmployee = async(req,res,next)=>{
     try {
-        const employee = await Employee.findById(req.param.id);
+        const employee = await Employee.findById(req.params.id);
         if(!employee){
             return res.status(404).json({message:"Employee doesn't exists."})
+        }
+
+        const user = await User.findById(employee.userId)
+        if(!user){
+            return res.status(404).json({message:"Associated user doesn't exist"})
+        }
+
+        if(user.companyId.toString() !== req.user.companyId.toString()){
+            return res.status(403).json({message:"You are not authorized to update this employee"})
         }
 
         if(req.user.role === "Employee" && employee.userId.toString() !== req.user.userId){
             return res.status(403).json({message: "You can only update your own profile."})
         }
 
+        const allowedFields = req.user.role === "HR"? allowedHRUpdateFields : allowedEmployeeUpdateFields
         const updates = {}
-        Object.keys(req.body).forEach((field) =>{
-            if(field === "address"){
-                allowedAddressFields.forEach((addressField)=>{
-                    if(req.body[field]?.[addressField] !== undefined){
-                        updates[`${field}.${addressField}`] = req.body[field][addressField]
-                    }
-                })
-            }else{ 
-                updates[field] = req.body[field]   
+        for (const field of allowedFields){
+            if(req.body[field] === undefined){
+                continue;
             }
-        })
+
+            if(field === "address"){
+                for(const addressField of allowedAddressFields){
+                    if(req.body.address?.[addressField] !== undefined){
+                        updates[`address.${addressField}`] = req.body.address[addressField]
+                    }
+                }
+            } else if (field === 'bankDetails'){
+                updates.bankDetails = req.body.bankDetails
+            } else {
+                updates[field] = req.body[field]
+            }
+        }
         if(Object.keys(updates).length === 0){
             return res.status(400).json({message:"No valid fields provided for update."})
         }
@@ -152,7 +178,7 @@ const updateEmployee = async(req,res,next)=>{
                 runValidators: true
             }
         )
-        if(!employee){
+        if(!updatedemployee){
             return res.status(404).json({message:"Employee doesn't exists."})
         }
         res.status(200).json({message:"Employee updated successfully", updatedemployee})
@@ -174,6 +200,16 @@ const deleteEmployee = async(req,res,next)=>{
             return res.status(404).json({message: "Employee doesn't exists."})
         }
 
+        const user = await User.findById(employee.userId).session(session);
+        if(!user){
+            await session.abortTransaction();
+            return res.status(404).json({message:"Associated user doesn't exist."})
+        }
+
+        if(user.companyId.toString() !== req.user.companyId.toString()){
+            await session.abortTransaction()
+            return res.status(403).json({message:"You are not authorized to delete this employee"})
+        }
         await Employee.findByIdAndDelete(req.params.id,
         {session});
         await User.findByIdAndDelete(employee.userId,

@@ -1,18 +1,19 @@
 const bcrypt = require("bcrypt");
 const User = require("../models/user.models");
+const Company = require("../models/company.models")
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 const Employee = require("../models/employee.models");
 
-const generateToken = (userId, role) => {
-  return jwt.sign({ userId, role }, process.env.JWT_SECRET, {
+const generateToken = (userId, role, companyId) => {
+  return jwt.sign({ userId, role, companyId }, process.env.JWT_SECRET, {
     expiresIn: "1d",
   });
 };
 
 const register = async (req, res, next) => {
-  const { name, email, phoneNum, password } = req.body;
-  if (!name || !email || !phoneNum || !password) {
+  const { businessName, name, email, phoneNum, password } = req.body;
+  if (!businessName || !name || !email || !phoneNum || !password) {
     return res.status(400).json({ message: "All fields are required" });
   }
   const session = await mongoose.startSession();
@@ -27,9 +28,18 @@ const register = async (req, res, next) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    const [company] = await Company.create([
+      {
+        businessName,
+        email,
+        phoneNum
+      }
+    ], {session})
+
     const [user] = await User.create(
       [
         {
+          companyId: company._id,
           name,
           email,
           phoneNum,
@@ -88,7 +98,7 @@ const login = async (req, res, next) => {
       return res.status(401).json({ message: "Incorrect password" });
     }
 
-    const token = generateToken(user._id, user.role);
+    const token = generateToken(user._id, user.role, user.companyId);
 
     res.status(200).json({
       message: "Login successful",
