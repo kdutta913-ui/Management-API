@@ -21,8 +21,24 @@ const allowedEmployeeRoles = [
     "Employee"
 ]
 
+const allowedHRUpdateFields = [
+    "department",
+    "designation",
+    "salary",
+    "dateOfJoining",
+    "address",
+    "bankDetails"
+];
+
+const allowedEmployeeUpdateFields = [
+    "address",
+    "bankDetails"
+];
+
 module.exports = {
     allowedFields,
     allowedAddressFields,
-    allowedEmployeeRoles
+    allowedEmployeeRoles,
+    allowedHRUpdateFields,
+    allowedEmployeeUpdateFields
 }
