@@ -1,5 +1,5 @@
 const express = require('express')
-const router = express.Router
+const router = express.Router()
 
 const {requestLeave, getLeaves, getLeaveById, approveLeave, rejectLeave, cancelLeave} = require("../controllers/leave.controllers");
 
@@ -54,7 +54,7 @@ router.patch("/:id/reject",
 
 router.patch("/:id/cancel",
     authenticate,
-    authorize("Employee","Teamlead"),
+    authorize("HR", "TeamLead", "Employee"),
     cancelLeave
 )
 
