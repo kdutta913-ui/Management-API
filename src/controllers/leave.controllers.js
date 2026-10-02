@@ -1,7 +1,7 @@
 const Leave = require('../models/leave.models')
 const User = require("../models/user.models")
 
-const {LEAVE_TYPES} = require("../constants/leaveTypes")
+const {LEAVE_TYPES, LEAVE_STATUS} = require("../constants/leaveTypes")
 
 //REQUEST LEAVES
 const requestLeave = async(req,res,next) =>{
@@ -28,7 +28,7 @@ const requestLeave = async(req,res,next) =>{
             return res.status(400).json({message:"Invalid date format"})
         }
 
-        if(startDate > endDate){
+        if(start > end){
             return res.status(400).json({message:"Start date can't be after end date."})
         }
 
@@ -45,7 +45,7 @@ const requestLeave = async(req,res,next) =>{
             companyId: req.user.companyId,
             requestedBy: req.user.userId,
             status:{
-                $in: ["PENDING", "APPROVED"]
+                $in: [LEAVE_STATUS.PENDING, LEAVE_STATUS.APPROVED]
             },
             startDate:{
                 $lte: end
@@ -142,7 +142,7 @@ const approveLeave = async (req, res, next) => {
         // Only pending leaves can be approved
         // ----------------------------------------------------
 
-        if (leave.status !== "PENDING") {
+        if (leave.status !== LEAVE_STATUS.PENDING) {
 
             return res.status(400).json({
                 message:
@@ -170,7 +170,7 @@ const approveLeave = async (req, res, next) => {
         // Approve
         // ----------------------------------------------------
 
-        leave.status = "APPROVED";
+        leave.status = LEAVE_STATUS.APPROVED;
 
         leave.approvedBy = req.user.userId;
 
@@ -200,11 +200,11 @@ const rejectLeave = async(req,res,next)=>{
             return res.status(404).json({message:"Leave not found"})
         }
 
-        if(leaves.status !== "PENDING"){
+        if(leaves.status !== LEAVE_STATUS.PENDING){
             return res.status(400).json({message:`Leave can't be rejected because it's current state is ${leaves.status}`})
         }
 
-        if(req.user.role === "HR" && leave.requestedBy.toString() ===
+        if(req.user.role === "HR" && leaves.requestedBy.toString() ===
         req.user.userId.toString()) {
             return res.status(403).json({message:"HR can't reject there own leave"})
         }
@@ -213,7 +213,7 @@ const rejectLeave = async(req,res,next)=>{
             return res.status(400).json({message:"Rejection reason can't be empty"})
         }
 
-        leaves.status = "REJECTED";
+        leaves.status = LEAVE_STATUS.REJECTED;
         leaves.rejectedBy = req.user.userId;
         leaves.rejectedAt = new Date();
         leaves.rejectionReason = rejectionReason
@@ -235,12 +235,14 @@ const cancelLeave = async(req,res,next)=>{
         if(!leaves){
             return res.status(404).json({message:"Leaves not found"})
         }
-
-        if(leaves.status !== "PENDING"){
+        if(leaves.requestedBy.toString() !== req.user.userId.toString()){
+            return res.status(403).json({message:"You are not authorize to cancle leaves"})
+        }
+        if(leaves.status !== LEAVE_STATUS.PENDING){
             return res.status(400).json({message:`Leave can't be cancelled because it's current state is ${leaves.status}`})
         }
 
-        leaves.status = "CANCELLED"
+        leaves.status = LEAVE_STATUS.CANCELLED
         leaves.cancelledAt = new Date()
 
         await leaves.save()
