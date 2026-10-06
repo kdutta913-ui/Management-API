@@ -1,5 +1,5 @@
 const express = require('express');
-const { createEmployee, getEmployees, getEmployeeById, updateEmployee, deleteEmployee, getMyProfile } = require('../controllers/employee.controller');
+const { createEmployee, getEmployees, getEmployeeById, updateEmployee, deleteEmployee, getMyProfile, assignTeamLead } = require('../controllers/employee.controller');
 const { validateEmployeeFields, validateName, validateEmail, validatePhone, validateSalary, validateEmployeeCreate, validatePassword } = require('../middleware/employee.validation');
 
 const authenticate = require('../middleware/authenticate.middleware')
@@ -45,6 +45,11 @@ router.patch("/:id",
     validateSalary, 
     updateEmployee) // update something of the employee by id
 
+router.patch("/:id/team-lead",
+    authenticate,
+    authorize("CompanyAdmin", "HR"),
+    assignTeamLead
+)
 router.delete("/:id",
     authenticate, 
     authorize("HR", "CompanyAdmin"), 

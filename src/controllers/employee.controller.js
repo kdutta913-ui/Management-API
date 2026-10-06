@@ -225,11 +225,94 @@ const deleteEmployee = async(req,res,next)=>{
     }
 }
 
+const assignTeamLead = async (req, res, next) => {
+    try {
+        const { teamLeadId } = req.body
+
+        // 1. Validate teamLeadId
+        if (!teamLeadId) {
+            return res.status(400).json({
+                message: "Team lead ID is required."
+            })
+        }
+
+        // 2. Find employee
+        const employee = await Employee.findById(req.params.id)
+
+        if (!employee) {
+            return res.status(404).json({
+                message: "Employee not found."
+            })
+        }
+
+        // 3. Find the selected TeamLead user
+        const teamLead = await User.findById(teamLeadId)
+
+        if (!teamLead) {
+            return res.status(404).json({
+                message: "Team lead not found."
+            })
+        }
+
+        // 4. Make sure the selected user actually has TeamLead role
+        if (teamLead.role !== "TeamLead") {
+            return res.status(400).json({
+                message: "Selected user does not have TeamLead role."
+            })
+        }
+
+        // 5. Find the User associated with this employee
+        const employeeUser = await User.findById(employee.userId)
+
+        if (!employeeUser) {
+            return res.status(404).json({
+                message: "Employee user not found."
+            })
+        }
+
+        // 6. Make sure employee and TeamLead belong to same company
+        if (
+            employeeUser.companyId.toString() !==
+            teamLead.companyId.toString()
+        ) {
+            return res.status(403).json({
+                message: "Employee and TeamLead must belong to the same company."
+            })
+        }
+
+        // 7. Check if employee is already assigned to this TeamLead
+        if (
+            employee.teamLeadId &&
+            employee.teamLeadId.toString() === teamLead._id.toString()
+        ) {
+            return res.status(409).json({
+                message: "Employee is already assigned to this TeamLead."
+            })
+        }
+
+        // 8. Assign TeamLead
+        employee.teamLeadId = teamLead._id
+
+        // 9. Save employee
+        await employee.save()
+
+        // 10. Return response
+        return res.status(200).json({
+            message: "TeamLead assigned successfully.",
+            employee
+        })
+
+    } catch (error) {
+        next(error)
+    }
+}
+
 module.exports = {
     createEmployee,
     getEmployees,
     getEmployeeById,
     getMyProfile,
     updateEmployee,
-    deleteEmployee
+    deleteEmployee,
+    assignTeamLead
 }
